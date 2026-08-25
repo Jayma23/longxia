@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>龙虾助手 · 入口</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, "PingFang SC", system-ui, sans-serif; background: #f6f4f0; color: #2b2622; }
+  @media (prefers-color-scheme: dark) { body { background: #1c1a17; color: #ece7df; } .box { background: #26231f !important; border-color: #3a352e !important; } }
+  .box { background: #fff; border: 1px solid #e6e0d8; border-radius: 16px; padding: 32px 30px; width: 340px; max-width: 90vw; text-align: center; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { font-size: 13.5px; color: #8a8073; margin: 0 0 18px; line-height: 1.5; }
+  a.btn { display: inline-block; text-decoration: none; background: #23643c; color: #fff; font-weight: 600;
+    padding: 11px 22px; border-radius: 10px; font-size: 15px; }
+  a.btn.off { background: #b8b0a4; pointer-events: none; }
+  .status { margin-top: 14px; font-size: 12.5px; color: #8a8073; min-height: 1.2em; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #d8d2c8; border-top-color: #23643c;
+    border-radius: 50%; animation: r 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes r { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🦞 龙虾助手</h1>
+  <p>正在把你带到当前的确认面板…<br>打开后用负责人给你的口令登录。</p>
+  <a class="btn off" id="go" href="#">进入面板</a>
+  <div class="status" id="status"><span class="spin"></span>连接中…</div>
+</div>
+<script>
+// 读取当前隧道网址(由负责人的机器实时更新到 url.txt),自动跳转过去。
+// 加时间戳绕过 GitHub Pages 缓存,尽量拿到最新网址。
+async function resolve() {
+  const status = document.getElementById("status");
+  const go = document.getElementById("go");
+  try {
+    const res = await fetch("url.txt?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("no url");
+    const url = (await res.text()).trim();
+    if (!/^https:\/\/[^\s]+$/.test(url)) throw new Error("bad url");
+    go.href = url;
+    go.classList.remove("off");
+    go.textContent = "进入面板";
+    status.textContent = "已就绪,正在进入…";
+    // 自动跳转;若浏览器拦截,用户可手动点按钮
+    setTimeout(() => { location.replace(url); }, 600);
+  } catch (e) {
+    status.textContent = "服务当前不在线(负责人的电脑可能没开机),稍后自动重试…";
+    go.classList.add("off");
+    go.textContent = "暂不可用";
+    setTimeout(resolve, 5000); // 离线时每 5 秒重试
+  }
+}
+resolve();
+</script>
+</body>
+</html>
